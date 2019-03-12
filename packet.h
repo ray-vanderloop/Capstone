@@ -20,7 +20,13 @@ These packets are transmitted from the Telemetrum once/second when on the ground
 */
 struct sensor_packet {
 	struct packet_header header; //packet header - packet bytes[0-4]
-	uint8_t state; //flight state - packet byte[5]
+	uint8_t state; //flight state - packet byte[5]:
+                    //flight state Boost = 00
+                    //flight state Fast = 01
+                    //flight state Coast = 02
+                    //flight state Drogue = 03
+                    //flight state Main = 04
+                    //flight state Landed = 05
 	int16_t accelmeter; //accelerometer data - packet bytes[6-7]
 	int32_t pres; //pressure sensor data (Pa * 10) - packet bytes[8-11]
 	int16_t temp; //temperature sensor data (celcius * 100) - packet bytes[12-13]
@@ -30,7 +36,7 @@ struct sensor_packet {
 	int16_t v_batt; //battery voltage - packet bytes[20-21]
 	int16_t sense_d; //drogue continuity sense - packet bytes[22-23]
 	int16_t sense_m; //main contonuity sense - packet bytes[24-25]
-	uint8_t pad[6]; //6 pad bytes - packet bytes[26-32]
+	uint8_t pad[6]; //6 pad bytes - packet bytes[26-31]
 };
 
 /*
@@ -44,7 +50,7 @@ struct calibration_packet {
 	int16_t ground_accel;  //average accelerometer reading on pad/ground - packet bytes[12-13]
 	int16_t accel_plus_g;  //accel calibration at +1g - packet bytes[14-15]
 	int16_t accel_minus_g; //accel calibration at -1g - packet bytes[16-17]
-	uint8_t endpad[14];    //14 pad bytes - packet bytes[18-32] 
+	uint8_t endpad[14];    //14 pad bytes - packet bytes[18-32]
 };
 
 /*
@@ -76,7 +82,7 @@ struct GPSLocation_packet {
 							//Bit 5, name: running - GPS receiver is operational
 							//Bit 6, name: date_valid - Reported date is valid
 							//Bit 7, name: course_valid - ground speed, course, and climb rates are valid
-	uint16_t altitude_low;  // GPS reported altitude (m) - packet bytes[6-7] 
+	uint16_t altitude_low;  // GPS reported altitude (m) - packet bytes[6-7]
 	int32_t latitude;       //Latitude (degrees * 10?) - packet bytes[8-11]
 	int32_t longitude;      //Longitude (degrees * 10?) - packet bytes[12-15]
 	uint8_t year;           //Year - 2000 - packet byte[16]
@@ -101,6 +107,13 @@ struct GPSLocation_packet {
 	int8_t altitude_high;  /* 31 high byte of altitude */
 };
 
+/*GPS per-satellite data:*/
+struct sat_info_t {
+	uint8_t svid; //svid - space vehicle (satellite) identifier
+	uint8_t c_n_1; //C/N1 signal quality indicator
+};
+
+
 /*
 The GPS Satellite Data packet type (type = 0x06) contains information of satellite identifiers and signal quality.
 This data is in the form of a C/N1 number for up to 12 satellites
@@ -109,15 +122,10 @@ These packets are transmitted from the Telemetrum once/second during all flight 
 struct GPSSatData_packet {
 	struct packet_header header; //packet header - packet bytes[0-4]
 	uint8_t channels; //Number of reported satellites - packet byte[5]
-	struct sat_info_t sats[12];   //Channels: sats[0] is svid, and sats[1-11] is c_n_1  - packet bytes[6-29]
+	struct sat_info_t sats[12];   //Channels  - packet bytes[6-29]
 	uint8_t unused[2];  //Unused bytes  - packet bytes[30-32]
 };
 
-/*GPS per-satellite data:*/
-struct sat_info_t {
-	uint8_t svid; //svid - space vehicle (satellite) identifier
-	uint8_t c_n_1; //C/N1 signal quality indicator
-};
 
 /*
 The Companion Data packet type (type = 0x07) contains telemetry information to be included in the downlink and provides 12 16-bit data values.
