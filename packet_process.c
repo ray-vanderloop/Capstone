@@ -10,32 +10,34 @@
 #include <string.h>
 #include <stdbool.h>
 #include <inttypes.h>
-#include "python2.7/Python.h"
+#include <errno.h>
+#include <wiringPi.h>
+#include <wiringSerial.h>
 
 //void initProcess() {
 int main(){
-    //initiate counter variables to 0
-    boost_dropped = 0;
-    fast_dropped = 0;
-    coast_dropped = 0;
-    drogue_dropped = 0;
-    main_dropped = 0;
-    landed_dropped = 0;
-    boost_received = 0;
-    fast_received = 0;
-    coast_received = 0;
-    drouge_received = 0;
-    main_received = 0;
-    landed_received = 0;
-    total_received = 0;
+	//initiate counter variables to 0
+	boost_dropped = 0;
+	fast_dropped = 0;
+	coast_dropped = 0;
+	drogue_dropped = 0;
+	main_dropped = 0;
+	landed_dropped = 0;
+	boost_received = 0;
+	fast_received = 0;
+	coast_received = 0;
+	drouge_received = 0;
+	main_received = 0;
+	landed_received = 0;
+	total_received = 0;
 
-    //create threads
+	//create threads and initiate semaphores
 	pthread_t processThread, receiveThread;
 	sem_init(&keySem, 1, 1);
 	sem_init(&cntSem, 1, 0);
 	buffer.writeIndex = 0;
 	buffer.readIndex = 0;
-    pthread_create(&receiveThread, NULL, receive, NULL);
+    	pthread_create(&receiveThread, NULL, receive, NULL);
 	pthread_create(&processThread, NULL, processPacket, NULL);
 
 	pthread_join(processThread, NULL);
@@ -176,24 +178,24 @@ void *processPacket(){
 
                     copy8bits(temp_uint8, &dmsg, 10);
                     sscanf(temp_uint8, "%" SCNx8, &psensor.state);
-                    printf("psensor.temp: %" PRId8 "\n", psensor.state);
+                    printf("psensor.state: %" PRId8 "\n", psensor.state);
 
-                    if(psensor.state == 0) {
+                    if(psensor.state == 1) {
                         boost_received++;
                      }
-                     else if(psensor.state == 1) {
+                     else if(psensor.state == 2) {
                         fast_received++;
                      }
-                     else if(psensor.state == 2) {
+                     else if(psensor.state == 3) {
                         coast_received++;
                      }
-                     else if(psensor.state == 3) {
+                     else if(psensor.state == 4) {
                         drouge_received++;
                      }
-                     else if(psensor.state == 4) {
+                     else if(psensor.state == 5) {
                         main_received++;
                      }
-                     else if(psensor.state == 5) {
+                     else if(psensor.state == 6) {
                         landed_received++;
                      }
 
@@ -246,22 +248,22 @@ void *processPacket(){
                         copy8bits(temp_uint8, &dmsg, 10);
                         char temp;
                         sscanf(temp_uint8, "%" SCNx8, &temp);
-                        if(temp == 0) {
+                        if(temp == 1) {
                             boost_dropped++;
                         }
-                        else if(temp == 1) {
+                        else if(temp == 2) {
                             fast_dropped++;
                         }
-                        else if(temp == 2) {
+                        else if(temp == 3) {
                             coast_dropped++;
                         }
-                        else if(temp == 3) {
+                        else if(temp == 4) {
                             drogue_dropped++;
                         }
-                        else if(temp == 4) {
+                        else if(temp == 5) {
                             main_dropped++;
                         }
-                        else if(temp == 5) {
+                        else if(temp == 6) {
                             landed_dropped++;
                         }
                     }
@@ -464,62 +466,40 @@ This function takes a message (newmsg) and passes it to bufferWrite
 This function gets implemented by the receiverThread
 */
 void *receive(){
-    struct msg newmsg;
-	//char txt[] = "4f01080b05765e00701f1a1bbeb8d7b60b070605140c00060000000000000000"; //packet 0x05
-	//char txt1[] = "4f01f80b0592ef116a341a1dbcb847b3ab08070614bc0a051aa1683d11111111"; //packet 0x05 with greater timestamp
-	//char txt2[] = "4f01080b0592ef116a341a1dbcb847b3ab08070614bc0a051aa1683d11111111"; //packet 0x05 with lesser timestamp
-
-	char txt[] =  "4f01010b0a005e00701f1a1bbeb8d7b60b070605140c00060000000000000000"; //packet 0x0A
-	char txt1[] = "4f01020b0a01ef116a341a1dbcb847b3ab08070614bc0a051aa1683d12345670"; //packet 0x0A with greater timestamp
-	char txt2[] = "4f01030b0a02ef116a341a1dbcb847b3ab08070614bc0a051aa1683d12345670"; //packet 0x0A with lesser timestamp
-	char txt3[] = "4f01040b0a03ef116a341a1dbcb847b3ab08070614bc0a051aa1683d12345670"; //packet 0x0A with lesser timestamp
-	char txt4[] = "4f01050b0a04ef116a341a1dbcb847b3ab08070614bc0a051aa1683d12345670"; //packet 0x0A with lesser timestamp
-	char txt5[] = "4f01060b0a05ef116a341a1dbcb847b3ab08070614bc0a051aa1683d12345670"; //packet 0x0A with lesser timestamp
-
-	//char txt[] = "4f01080b0bb584ee26ac29fb4e23ddb62a010704142c0326060f00a0b0ac2306"; //packet 0x0B
-	//char txt1[] = "4f01f80b0b72ef61aa34ea8dac482763a9a80746149c0a156aa9653db8aa5f21"; //packet 0x0B with greater timestamp
-	//char txt2[] = "4f01080b0b72ef61aa34ea8dac482763a9a80746149c0a156aa9653db8aa5f21"; //packet 0x0B with lesser timestamp
-
-	//char txt[] = "4f01080b07b583ea26cc35faae232db72a0fa744841c7326969f90aabfac2306"; //packet 0x07
-	//char txt1[] = "4f01f80b0772ef713a3aec8dac4e2723a9a8674624922a156aa9653d285a5f21"; //packet 0x07 with greater timestamp
-	//char txt2[] = "4f01080b0772ef61aa34ea8dac482763a9a80746149c0a156aa9653db8aa5f21"; //packet 0x07 with lesser timestamp
-
-	//char txt[] =  "4f01080b04b583ea26cd33f3ae4325b77a2fa44464ac7a2a9a9fa0aebfac2366"; //packet 0x04
-	//char txt1[] = "4f01f80b0455e4733f3ae182acae27a3c9ac6746c4c22a156aa9653d285a5fcc"; //packet 0x04 with greater timestamp
-	//char txt2[] = "4f01080b0472ef61aa34ea8dac482763a9a80746149c0a156aa9653db8aa5f21"; //packet 0x04 with lesser timestamp
-
-	//char txt[] =  "4f01080b06b583ea26c03533aec324b79a2fa24b64ac7a3a1a9fb73ebf8c0316"; //packet 0x06
-	//char txt1[] = "4f01f80b0636e2733a32e782a3a829a9c9ac6726c5c82a1566a9653d280a50c2"; //packet 0x06 with greater timestamp
-	//char txt2[] = "4f01080b0672ef61aa34ea8dac482763a9a80746149c0a156aa9653db8aa5f21"; //packet 0x06 with lesser timestamp
-
-
-	int counter = 0;
-	for(;;){
-        sleep(2);
-        if(counter == 0) {
-        memcpy(newmsg.text, txt, 64);
-        }
-        else if(counter == 1) {
-        memcpy(newmsg.text, txt1, 64);
-        }
-        else if(counter == 2) {
-        memcpy(newmsg.text, txt2, 64);
-        }
-        else if(counter == 3) {
-        memcpy(newmsg.text, txt3, 64);
-        }
-        else if(counter == 4) {
-        memcpy(newmsg.text, txt4, 64);
-        }
-        else if(counter == 5) {
-        memcpy(newmsg.text, txt5, 64);
-        }
-        else {
-        memcpy(newmsg.text, txt, 64);
-        }
-        bufferWrite(&newmsg, &buffer);
-        counter++;
-		}
+	int serial = serialOpen("/dev/serial0", 9600); //9600 is the baud rate, this needs to match what you're communicating with
+  	struct msg newmsg;
+	char text[65];
+	int i = 0;
+	
+	if(serial == -1) {
+		printf("Error: Couldn't open port \n");
+	}
+	else {
+		printf("port open \n");
+		wiringPiSetup();
+		for(;;){
+        		if((serialDataAvail(serial) > 0) || (i == 64)) {
+				if(i < (sizeof(text) - 1)){
+       					text[i] = tolower(serialGetchar(serial));
+					i++;
+				}
+				else {
+					text[i] = '\0';
+					//printf("Text: %s \n", text);
+					//printf("size text: %d \n", sizeof(text));
+					//printf("here \n");
+					memcpy(newmsg.text, text, 65);
+      		  			bufferWrite(&newmsg, &buffer);
+					i = 0;
+        			}
+			}
+			else {
+				printf("sleeping \n");
+				sleep(1);
+				}
+			}
+	}
+	serialClose(serial);
 	return(NULL);
 }
 
@@ -529,11 +509,11 @@ buff is a shared resource between processThread and receiveThread and therefore 
 */
 uint8_t bufferWrite(struct msg *message, struct buffer *buff) {
 	sem_wait(&keySem); //wait on keySem semaphore. This is needed to synchronize access to buff
-    (*buff).msgBuffer[buff->writeIndex] = *message; //write message to the buffer at index specified by writeIndex
+    	(*buff).msgBuffer[buff->writeIndex] = *message; //write message to the buffer at index specified by writeIndex
 	printf("Write data: %s \n", (*buff).msgBuffer[buff->writeIndex].text);
 	buff->writeIndex++; //move to the next buffer location
 	//if the writeIndex is greater than the buffer size, set the writeIndex to the start of the buffer
-	if(buff->writeIndex > 20) {
+	if(buff->writeIndex > 19) {
 		buff->writeIndex = 0;
 	}
 	//the write and read index point to the same spot the function will return 1 to show an error. They should never be the same value.
@@ -547,23 +527,23 @@ uint8_t bufferWrite(struct msg *message, struct buffer *buff) {
 
 /*
 This function reads from the buffer (buff) and puts the result in the message passed as the parameter (message)
-buff is a shared resource between processThread and receiveThread and therefore must be protected
+buff is a shared resource between processThread and receiveThread and therefore must be protected by a semaphore
 */
 void bufferRead(struct msg *message, struct buffer *buff) {
-	sem_wait(&keySem); //wait on keySem semaphore. This is needed to synchronize access to buff
-    *message = (*buff).msgBuffer[buff->readIndex]; //read the buffer value at location specified by readIndex, and put the value read into message
-	printf("read data: %s \n", (*buff).msgBuffer[buff->readIndex].text);
+	sem_wait(&keySem); //wait on keySem semaphore. This is needed to synchronize access to the buffer.
+    	*message = (*buff).msgBuffer[buff->readIndex]; //read the buffer value at location specified by readIndex, and put the value read into message
+	printf("read data[%d]: %s \n", buff->readIndex, (*buff).msgBuffer[buff->readIndex].text);
 	buff->readIndex++;
 	//if the readIndex is greater than the buffer size, set the readIndex to the start of the buffer
-	if(buff->readIndex > 20){
+	if(buff->readIndex > 19){
 		buff->readIndex = 0;
 	}
 	sem_post(&keySem); //release access to buff
 }
 
 /*
-This function takes a buffer (temp_uint8) and copies 2 bites of the message (dmsg), starting at the specified index (i)
-This function is needed because the message is a string and needs to be parsed before it can be converted to uint8_t type
+This function takes a buffer (temp_uint8) and copies 2 bits of the message (dmsg), starting at the specified index (i)
+This function is needed because the message is a string and needs to be parsed before it can be converted to non-char type
 */
 void copy8bits(char *temp_uint8, struct msg *dmsg, int i) {
     temp_uint8[0] = dmsg->text[i];
@@ -572,8 +552,8 @@ void copy8bits(char *temp_uint8, struct msg *dmsg, int i) {
 }
 
 /*
-This function takes a buffer (temp_uint16) and copies 4 bites of the message (dmsg), starting at the specified index (i)
-This function is needed because the message is a string and needs to be parsed before it can be converted to uint16_t type
+This function takes a buffer (temp_uint16) and copies 4 bits of the message (dmsg), starting at the specified index (i)
+This function is needed because the message is a string and needs to be parsed before it can be converted to non-char type
 */
 void copy16bits(char *temp_uint16, struct msg *dmsg, int i) {
     temp_uint16[0] = dmsg->text[i];
@@ -584,8 +564,8 @@ void copy16bits(char *temp_uint16, struct msg *dmsg, int i) {
 }
 
 /*
-This function takes a buffer (temp_uint32) and copies 8 bites of the message (dmsg), starting at the specified index (i)
-This function is needed because the message is a string and needs to be parsed before it can be converted to uint32_t type
+This function takes a buffer (temp_uint32) and copies 8 bits of the message (dmsg), starting at the specified index (i)
+This function is needed because the message is a string and needs to be parsed before it can be converted to non-char type
 */
 void copy32bits(char *temp_uint32, struct msg *dmsg, int i) {
     temp_uint32[0] = dmsg->text[i];
@@ -596,5 +576,7 @@ void copy32bits(char *temp_uint32, struct msg *dmsg, int i) {
     temp_uint32[5] = dmsg->text[i+5];
     temp_uint32[6] = dmsg->text[i+6];
     temp_uint32[7] = dmsg->text[i+7];
-    temp_uint32[8] ='\0'; //this is nessisary otherwise the array size will grow for no reason
+    temp_uint32[8] = '\0'; //this is nessisary otherwise the array size will grow for no reason
 }
+
+
