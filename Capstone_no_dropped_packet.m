@@ -20,12 +20,10 @@ count = 1;
 used = [0 0 0 0 0 0];
 
 
-bits1 = 0;
-bits2 = [ '5', '5', '5', '5' ];
-bits3 = [ '5', '5', '5', '5' ];
+bits1 = [ '0', '4', '4', '4' ];
+bits2 = [ '0', '5', '5', '5' ];
 count1 = 0;
 count2 = 0;
-count3 = 0;
 state1 = 0;
 state2 = 0;
 state3 = 0;
@@ -68,6 +66,8 @@ while(count <= DesiredNumGeneratedPackets)
                 Packet_Type2 = horzcat('0', 'A');
             elseif(count == floor(5*DesiredNumGeneratedPackets/6 -1))
                 Packet_Type2 = horzcat('0', 'A');
+            elseif(count == floor(DesiredNumGeneratedPackets -1))
+                Packet_Type2 = horzcat('0', 'A');
             else
                 Index = randi(6) %index = randnum between 1 and 6
                 %Packet_Type2 = [0 x], where x is a random element from Array_Packet_Types
@@ -105,12 +105,12 @@ while(count <= DesiredNumGeneratedPackets)
             flight_state2 = horzcat(myZero, r); 
             
             if( isequal(flight_state2, [0 3]) )
-                count2 = count2 + 1;
+                count1 = count1 + 1;
                 bits1 = [ '0', '0', '0', '0' ]; %set bits to low
-                if(count2 > 1)
+                if(count1 > 1)
                     %state1 = 1;
-                    bits1 = [ '9', '9', '9', '9' ]; %set bits to high
-                    if(count2 > 2) 
+                    bits1 = [ '0', '9', '9', '9' ]; %set bits to high
+                    if(count1 > 2) 
                         %state1 = 2;
                         bits1 = [ '0', '0', '0', '0' ]; %set bits to low
                     end
@@ -118,14 +118,14 @@ while(count <= DesiredNumGeneratedPackets)
             end
             
             if( isequal(flight_state2, [0 4]) )
-                count3 = count3 + 1;
-                bits1 = "0000" ; %set bits to low
-                if(count3 > 1)
+                count2 = count2 + 1;
+                bits2 = [ '0', '0', '0', '0' ] ; %set bits to low
+                if(count2 > 1)
                     %state1 = 1;
-                    bits1 = "9999" ; %set bits to high
-                    if(count3 > 2) 
+                    bits2 = [ '0', '9', '9', '9' ] ; %set bits to high
+                    if(count2 > 2) 
                         %state1 = 2;
-                        bits1 = "0000";
+                        bits2 = [ '0', '0', '0', '0' ];
                     end
                 end
             end
@@ -176,7 +176,7 @@ while(count <= DesiredNumGeneratedPackets)
         
         %concatenate into packet
         myPacket = strcat(DeviceNum4, TimeStamp4_str, Packet_Type2, flight_state2_str, myRandHexArray1, bits1, bits2, myRandHexArray2)
-        %fwrite(s, myPacket);
+        fwrite(s, myPacket);
         count = count + 1;
         
         pause(2)
