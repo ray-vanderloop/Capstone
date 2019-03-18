@@ -21,8 +21,8 @@ used = [0 0 0 0 0 0];
 
 
 bits1 = 0;
-bits2 = "5555";
-bits3 = "5555";
+bits2 = [ '5', '5', '5', '5' ];
+bits3 = [ '5', '5', '5', '5' ];
 count1 = 0;
 count2 = 0;
 count3 = 0;
@@ -106,13 +106,13 @@ while(count <= DesiredNumGeneratedPackets)
             
             if( isequal(flight_state2, [0 3]) )
                 count2 = count2 + 1;
-                bits1 = "0000" ; %set bits to low
+                bits1 = [ '0', '0', '0', '0' ]; %set bits to low
                 if(count2 > 1)
                     %state1 = 1;
-                    bits1 = "9999" ; %set bits to high
+                    bits1 = [ '9', '9', '9', '9' ]; %set bits to high
                     if(count2 > 2) 
                         %state1 = 2;
-                        bits1 = "0000";
+                        bits1 = [ '0', '0', '0', '0' ]; %set bits to low
                     end
                 end
             end
@@ -176,7 +176,7 @@ while(count <= DesiredNumGeneratedPackets)
         
         %concatenate into packet
         myPacket = strcat(DeviceNum4, TimeStamp4_str, Packet_Type2, flight_state2_str, myRandHexArray1, bits1, bits2, myRandHexArray2)
-        fwrite(s, myPacket);
+        %fwrite(s, myPacket);
         count = count + 1;
         
         pause(2)
