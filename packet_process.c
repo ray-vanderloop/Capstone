@@ -17,16 +17,16 @@
 #include <ctype.h>
 
 //flight stage lights and radio good light GPIO pin output assignment
-#define boostLED 12
-#define fastLED 9
-#define coastLED 7
-#define drogueLED 0
-#define mainLED 2
-#define landedLED 5
-#define radioLED 8
-#define onLED 3
-#define mFailLED 10
-#define dFailLED 11
+#define boostLED 2
+#define fastLED 3
+#define coastLED 4
+#define drogueLED 5
+#define mainLED 8
+#define landedLED 9
+#define radioLED 27
+#define onLED 6
+#define mFailLED 0
+#define dFailLED 7
 
 //void initProcess() {
 int main(){
@@ -36,17 +36,17 @@ int main(){
 	}
 	else{
 		pinMode(onLED, OUTPUT);
-		//pinMode(boostLED, OUTPUT);
+		pinMode(boostLED, OUTPUT);
 		pinMode(fastLED, OUTPUT);
 		pinMode(coastLED, OUTPUT); 
 		pinMode(drogueLED, OUTPUT);
 		pinMode(mainLED, OUTPUT);
 		pinMode(dFailLED, OUTPUT);
 		pinMode(mFailLED, OUTPUT);
-		//pinMode(landedLED, OUTPUT);
+		pinMode(landedLED, OUTPUT);
 		pinMode(radioLED, OUTPUT);
 
-		/*digitalWrite(boostLED, LOW);
+		digitalWrite(boostLED, LOW);
 		digitalWrite(radioLED, LOW);
 		digitalWrite(fastLED, LOW);
 		digitalWrite(coastLED, LOW);
@@ -57,7 +57,7 @@ int main(){
 		digitalWrite(mFailLED, LOW);
 		digitalWrite(dFailLED, LOW);
 
-		digitalWrite(onLED, HIGH); *///turn on on LED 
+		digitalWrite(onLED, HIGH); //turn on on LED 
 
 //initiate counter variables to 0
 	boost_dropped = 0;
@@ -87,6 +87,16 @@ int main(){
 
 		pthread_join(processThread, NULL);
 		pthread_join(receiveThread, NULL); 
+		digitalWrite(boostLED, LOW);
+		digitalWrite(radioLED, LOW);
+		digitalWrite(fastLED, LOW);
+		digitalWrite(coastLED, LOW);
+		digitalWrite(drogueLED, LOW);
+		digitalWrite(mainLED, LOW);
+		digitalWrite(landedLED, LOW);
+		digitalWrite(onLED, LOW);
+		digitalWrite(mFailLED, LOW);
+		digitalWrite(dFailLED, LOW);
 	}
 	return 0;
 }
@@ -235,51 +245,51 @@ else{
                     printf("Flight Stage: %" PRId8 "\n", psensor.state);
 
                     if(psensor.state == 0) {
-			//if(digitalRead(boostLED) == 0) {
-				//digitalWrite(boostLED, HIGH); //turn on boost flight stage LED if it is off
-			//}
+			if(digitalRead(boostLED) == 0) {
+				digitalWrite(boostLED, HIGH); //turn on boost flight stage LED if it is off
+			}
 			printf("turn on boost LED \n");
 			boost_received++;
                      }
                      else if(psensor.state == 1) {
-			/*if(digitalRead(fastLED) == 0) {
+			if(digitalRead(fastLED) == 0) {
               			digitalWrite(fastLED, HIGH); //turn on fast flight stage LED if its off
-			}*/
+			}
 			printf("turn on fast LED \n");
                         fast_received++;
                      }
                      else if(psensor.state == 2) {
-			//if(digitalRead(coastLED) == 0) {
-              			//digitalWrite(coastLED, HIGH); //turn on coast flight stage LED if its off
-			//}
+			if(digitalRead(coastLED) == 0) {
+              			digitalWrite(coastLED, HIGH); //turn on coast flight stage LED if its off
+			}
 			printf("turn on coast LED \n");
                         coast_received++;
                      }
                      else if(psensor.state == 3) {
-			//if(digitalRead(drogueLED) == 0) {
-              			//digitalWrite(drogueLED, HIGH); //turn on drogue flight stage LED if its off
-			//}
+			if(digitalRead(drogueLED) == 0) {
+              			digitalWrite(drogueLED, HIGH); //turn on drogue flight stage LED if its off
+			}
 			printf("turn on drogue LED \n");
                         drouge_received++;
                      }
                      else if(psensor.state == 4) {
-			//if(digitalRead(mainLED) == 0) {
-              			//digitalWrite(mainLED, HIGH); //turn on main flight stage LED if its off
+			if(digitalRead(mainLED) == 0) {
+              			digitalWrite(mainLED, HIGH); //turn on main flight stage LED if its off
 			printf("turn on main LED \n");
 			if(drogueState == 0) {
-				//digitalWrite(dFailLED, HIGH); //turn on drouge fail light
+				digitalWrite(dFailLED, HIGH); //turn on drouge fail light
 				printf("turn on drouge failed light \n");
 			}
-			//}
+			}
                         main_received++;
                      }
                      else if(psensor.state == 5) {
-			/*if(digitalRead(landedLED) == 0) {
-              			//digitalWrite(landedLED, HIGH); //turn on landed flight stage LED if its off
-			}*/
+			if(digitalRead(landedLED) == 0) {
+              			digitalWrite(landedLED, HIGH); //turn on landed flight stage LED if its off
+			}
 			printf("turn on landed LED \n");
 			if(mainState == 0) {
-				//digitalWrite(mFailLED, HIGH); //turn on main fail light
+				digitalWrite(mFailLED, HIGH); //turn on main fail light
 				printf("turn on main failed light \n");
 			}
                         landed_received++;
@@ -641,9 +651,9 @@ void *receive(){
 	else {
 		for(;;){
         		if((serialDataAvail(serial) > 0) || (i == 64)) {
-				//if(digitalRead(radioLED) == 0) { 
-					//digitalWrite(radioLED, HIGH); //turn on radio good LED if it was previously off
-			//	}
+				if(digitalRead(radioLED) == 0) { 
+					digitalWrite(radioLED, HIGH); //turn on radio good LED if it was previously off
+				}
 				if(i < (sizeof(text) - 1)){
        					text[i] = tolower(serialGetchar(serial));
 					i++;
@@ -661,10 +671,10 @@ void *receive(){
 				clock_gettime(CLOCK_REALTIME, &getCurrentTime);
 				time_difference = getCurrentTime.tv_sec - lastReceivedTime;
 				if(time_difference >= 5) {
-					//digitalWrite(radioLED, LOW); //turn off radio good LED as packets have not been received in the last 5 seconds
-					printf("turn radio LED off \n");
+					digitalWrite(radioLED, LOW); //turn off radio good LED as packets have not been received in the last 5 seconds
+					//printf("turn radio LED off \n");
 				}
-				printf("sleep \n");
+				//printf("sleep \n");
 				sleep(1);
 			}
 		} 
