@@ -19,7 +19,7 @@
 //flight stage lights and radio good light GPIO pin output assignment
 #define boostLED 2
 #define fastLED 3
-#define coastLED 4
+#define coastLED 25
 #define drogueLED 5
 #define mainLED 8
 #define landedLED 9
